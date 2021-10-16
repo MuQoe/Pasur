@@ -5,6 +5,7 @@ package pasur;
  * 29/09/2021
  */
 
+import Score.CompositeStrategy;
 import ch.aplu.jcardgame.Card;
 import ch.aplu.jcardgame.Deck;
 import ch.aplu.jcardgame.Hand;
@@ -43,6 +44,7 @@ public class Pasur
     private PropertyChangeSupport propertyChangePublisher = new PropertyChangeSupport(this);
 
     private final LogSubject logger = LogSubject.getInstance();
+    private final CompositeStrategy strategies = CompositeStrategy.getInstance();
 
     public Pasur(int nPlayers) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException,
             InstantiationException
@@ -232,7 +234,7 @@ public class Pasur
                         if(k == nPlayers)
                             k = 0;
 
-                        updateScores();
+                        updateScores(false);
                     }
                 }
 
@@ -260,7 +262,7 @@ public class Pasur
                 }
             }
 
-            updateScores();
+            updateScores(true);
 
             currentStartingPlayerPos++;
             if(currentStartingPlayerPos == nPlayers)
@@ -273,7 +275,7 @@ public class Pasur
             for(int i = 0; i < nPlayers; i++)
             {
                 Player player = players[i];
-                if(player.getScore() >= SCORE_TO_WIN)
+                if(player.getTotalPoint() >= SCORE_TO_WIN)
                 {
                     if(playersWithEnoughScore == null)
                         playersWithEnoughScore = new ArrayList<>();
@@ -344,12 +346,12 @@ public class Pasur
         deckHand = deck.toHand(false);
         deckHand.setVerso(true);
 
-        updateScores();
+        updateScores(true);
 
         propertyChangePublisher.firePropertyChange(ON_RESET, null, null);
     }
 
-    private void updateScores()
+    private void updateScores(boolean bLastRound)
     {
         String scoreString = "";
         for (int i = 0; i < nPlayers; i++)
@@ -358,6 +360,17 @@ public class Pasur
                 scoreString += "        ";
 
             Player player = players[i];
+            // logger.notify("PickedCard[%s]",player.getPickedCards().toString());
+            // logger.notify("Surs[%s]",player.getSurs().toString());
+
+            int score = CompositeStrategy.getInstance().CalcScore(player.getPickedCards(),player.getSurs());
+            player.setCurrPoint(score);
+            player.setCumulatePoint(player.getTotalPoint() + score);
+
+            if (bLastRound) {
+                player.setTotalPoint(player.getCumulatePoint());
+            }
+
             scoreString += player.toString() + " = " + player.getScore() + " (" + player.getSurs().getNumberOfCards() + " Surs)";
         }
 

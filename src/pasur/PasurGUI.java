@@ -5,6 +5,9 @@ package pasur;
  * 29/09/2021
  */
 
+import Score.CompositeStrategy;
+import Score.ICallback;
+import Score.StrategyCallback;
 import ch.aplu.jcardgame.*;
 import ch.aplu.jgamegrid.Location;
 import ch.aplu.jgamegrid.TextActor;
@@ -50,11 +53,16 @@ public class PasurGUI implements PropertyChangeListener
 
     private Pasur pasur;
 
+    private CompositeStrategy strategies = CompositeStrategy.getInstance();
+
     public PasurGUI() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException,
             InstantiationException
     {
         LogSubject.getInstance().Attach(new DebugLogger());
+
         pasur = new Pasur(2);
+
+        StrategyCallback.allAllStrategy(strategies);
 
         animate = Configuration.getInstance().isAnimate();
 

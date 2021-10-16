@@ -5,6 +5,7 @@ package pasur;
  * 29/09/2021
  */
 
+import Score.CompositeStrategy;
 import ch.aplu.jcardgame.*;
 import logger.LogSubject;
 
@@ -23,6 +24,10 @@ public abstract class Player
     {
         this.id = id;
     }
+
+    protected int currPoint;
+    protected int cumulatePoint;
+    protected int totalPoint;
 
     protected LogSubject logger = LogSubject.getInstance();
 
@@ -232,9 +237,34 @@ public abstract class Player
         return "Player" + id;
     }
 
+    public void setCurrPoint(int currPoint) {
+        this.currPoint = currPoint;
+    }
+
+    public void setCumulatePoint(int cumulatePoint) {
+        this.cumulatePoint = cumulatePoint;
+    }
+
+    public void setTotalPoint(int totalPoint) {
+        this.totalPoint = totalPoint;
+    }
+
+    public int getCurrPoint() {
+        return currPoint;
+    }
+
+    public int getCumulatePoint() {
+        return cumulatePoint;
+    }
+
+    public int getTotalPoint() {
+        return totalPoint;
+    }
+
     public int getScore()
     {
-        return 0;
+        return getCumulatePoint();
+        //return 0;
     }
 
     abstract Card selectToPlay();
