@@ -6,32 +6,38 @@ import java.util.ArrayList;
 
 public class CompositeStrategy implements IScoreStrategy, ICallback{
 
-	private static CompositeStrategy _instance = null;
+	// the ArrayList of Strategies
 	private final ArrayList<IScoreStrategy> Strategies;
-	public static CompositeStrategy getInstance() {
-		if (_instance == null) {
-			synchronized(CompositeStrategy.class) {
-				if (_instance == null) {
-					// Set the Default Level to DEBUG level
-					_instance = new CompositeStrategy();
-				}
-			}
-		}
-		return _instance;
-	}
 
-	private CompositeStrategy() {
+	/**
+	 * initialise the ArrayList that used to store all strategies
+	 */
+	public CompositeStrategy() {
 		this.Strategies = new ArrayList<>();
 	}
 
+	/**
+	 * adding the strategy to the Store
+	 * @param strategy the strategy that needs to add
+	 */
 	public void addStrategy(IScoreStrategy strategy){
 		this.Strategies.add(strategy);
 	}
+
+	/**
+	 * removing the strategy from the Store
+	 * @param strategy the strategy that needs to remove
+	 */
 	public void removeStrategy(IScoreStrategy strategy){
 		this.Strategies.remove(strategy);
 	}
 
-
+	/**
+	 * Calculate the overall score from all stored strategies
+	 * @param pickedUp the picked up card list
+	 * @param Surs the picked up surs card list
+	 * @return the total score of all stored strategies
+	 */
 	@Override
 	public int CalcScore(Hand pickedUp, Hand Surs) {
 		int finalPoint = 0;

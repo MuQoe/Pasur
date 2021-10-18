@@ -36,7 +36,7 @@ public abstract class Player
      * @param pool current pool
      * @return the played card and the set of cards this player wants to pick up from the pool.
      */
-    public final Map.Entry<Card, Set<Card>> playCard(Hand pool)
+    public final Map.Entry<Card, Set<Card>> PLAYCARD(Hand pool)
     {
         Card playedCard = selectToPlay();
         Set<Card> cardsToPick = null;

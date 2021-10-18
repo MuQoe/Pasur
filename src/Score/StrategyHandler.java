@@ -2,7 +2,13 @@ package Score;
 
 import java.util.ArrayList;
 
-public class StrategyCallback {
+public class StrategyHandler {
+
+
+	/**
+	 * the functions to manage which strategy that need to add the the overall compositeStrategies
+	 * @param callback the callback function that used to add the strategy to the compositeStrategies
+	 */
 	public static void allAllStrategy(ICallback callback){
 		ArrayList<IScoreStrategy> arr = new ArrayList<>();
 		arr.add(new AceStrategy());

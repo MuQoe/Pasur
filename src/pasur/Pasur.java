@@ -6,6 +6,7 @@ package pasur;
  */
 
 import Score.CompositeStrategy;
+import Score.StrategyHandler;
 import ch.aplu.jcardgame.Card;
 import ch.aplu.jcardgame.Deck;
 import ch.aplu.jcardgame.Hand;
@@ -27,55 +28,57 @@ public class Pasur
     public static final String ON_GAME_END = "onGameEnd";
 
     // used for the simulation
-    private static final Random random = new Random(Configuration.getInstance().getSeed());
+    private static final Random RANDOM = new Random(Configuration.getInstance().getSeed());
 
     private static final int SCORE_TO_WIN = 62;
     private static final int N_HAND_CARDS = 4;
-    private final int nPlayers;
+    private final int N_PLAYERS;
 
     private boolean paused = true;
     private boolean gameStarted = false;
 
-    private final Deck deck;
+    private final Deck DECK;
     private Hand deckHand;
-    private final Hand poolHand;
-    private final Player[] players;
+    private final Hand POOL_HAND;
+    private final Player[] PLAYERS;
 
     private PropertyChangeSupport propertyChangePublisher = new PropertyChangeSupport(this);
 
-    private final LogSubject logger = LogSubject.getInstance();
-    private final CompositeStrategy strategies = CompositeStrategy.getInstance();
+    private final LogSubject LOGGER = LogSubject.getInstance();
+    private final CompositeStrategy STRATEGIES = new CompositeStrategy();
 
-    public Pasur(int nPlayers) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException,
+    public Pasur(int N_PLAYERS) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException,
             InstantiationException
     {
         // Instantiate players
-        this.nPlayers = nPlayers;
+        this.N_PLAYERS = N_PLAYERS;
 
-        players = new Player[nPlayers];
+        StrategyHandler.allAllStrategy(STRATEGIES);
+
+        PLAYERS = new Player[N_PLAYERS];
         Class<?> clazz;
         clazz = Class.forName(Configuration.getInstance().getPlayer0class());
-        players[0] = (Player) clazz.getConstructor(int.class).newInstance(0);
+        PLAYERS[0] = (Player) clazz.getConstructor(int.class).newInstance(0);
         clazz = Class.forName(Configuration.getInstance().getPlayer1class());
-        players[1] = (Player) clazz.getConstructor(int.class).newInstance(1);
+        PLAYERS[1] = (Player) clazz.getConstructor(int.class).newInstance(1);
 
-        deck = new Deck(Suit.values(), Rank.values(), "cover", suit -> Rank.getCardValuesArray());
+        DECK = new Deck(Suit.values(), Rank.values(), "cover", suit -> Rank.getCardValuesArray());
 
-        poolHand = new Hand(deck);
+        POOL_HAND = new Hand(DECK);
 
-        for (int i = 0; i < nPlayers; i++)
+        for (int i = 0; i < N_PLAYERS; i++)
         {
-            Player player = players[i];
+            Player player = PLAYERS[i];
 
-            Hand hand = new Hand(deck);
+            Hand hand = new Hand(DECK);
             player.setHand(hand);
 
             // set the picked cards for this player
-            Hand pickedCards = new Hand(deck);
+            Hand pickedCards = new Hand(DECK);
             player.setPickedCards(pickedCards);
 
             // set the sur cards for this player
-            Hand surCards = new Hand(deck);
+            Hand surCards = new Hand(DECK);
             player.setSurs(surCards);
         }
     }
@@ -102,19 +105,19 @@ public class Pasur
         gameStarted = true;
 
         // System.out.println("Game starts...");
-        logger.notify("Game starts...");
+        LOGGER.notify("Game starts...");
 
         Player winner = null;
 
         int currentStartingPlayerPos = 0; // players should alternate for starting each round of game
-        Player lastPlayerWhoPickedAcard = players[0];
+        Player lastPlayerWhoPickedAcard = PLAYERS[0];
         int roundOfGame = 0;
         List<Card> cardList = new ArrayList<>(1);
         while(winner == null)
         {
             roundOfGame++;
             // System.out.println("Round " + roundOfGame + " of the game starts...");
-            logger.notify("Round " + roundOfGame + " of the game starts...");
+            LOGGER.notify("Round " + roundOfGame + " of the game starts...");
             boolean isFirstRound = true;
             reset();
 
@@ -144,20 +147,20 @@ public class Pasur
                         pauseGame();
                     }
 
-                    for(int j = 0, k = currentStartingPlayerPos; j < nPlayers; j++)
+                    for(int j = 0, k = currentStartingPlayerPos; j < N_PLAYERS; j++)
                     {
                         if (paused) {
                             pauseGame();
                         }
 
-                        Player player = players[k];
-                        Map.Entry<Card, Set<Card>> playedCard_cardsToPick = player.playCard(poolHand);
+                        Player player = PLAYERS[k];
+                        Map.Entry<Card, Set<Card>> playedCard_cardsToPick = player.PLAYCARD(POOL_HAND);
                         Card playedCard = playedCard_cardsToPick.getKey();
                         Set<Card> cardsToPick = playedCard_cardsToPick.getValue();
 
                         cardList.clear();
                         cardList.add(playedCard);
-                        transfer(cardList, poolHand, false);
+                        transfer(cardList, POOL_HAND, false);
                         playedCard.setVerso(false);
 
                         if(!cardsToPick.isEmpty())
@@ -182,29 +185,29 @@ public class Pasur
                             }
 
                             // System.out.println(player.toString() + " picks " + toString(cardList));
-                            logger.notify(player.toString() + " picks " + toString(cardList));
+                            LOGGER.notify(player.toString() + " picks " + toString(cardList));
                             if(isAsur(playedCard, isLastRound))
                             {
                                 // player has a sur. If the other players have a sur this sur will be used to remove one of their surs.
                                 // otherwise it will be added as a sur for this player
 
                                 // System.out.println(player.toString() + " scores a sur");
-                                logger.notify(player.toString() + " scores a sur");
+                                LOGGER.notify(player.toString() + " scores a sur");
                                 int nOtherPlayersWithSure = 0;
-                                for(int r = 0; r < nPlayers; r++)
+                                for(int r = 0; r < N_PLAYERS; r++)
                                 {
-                                    if(player != players[r] && !players[r].getSurs().isEmpty())
+                                    if(player != PLAYERS[r] && !PLAYERS[r].getSurs().isEmpty())
                                     {
                                         nOtherPlayersWithSure++;
                                     }
                                 }
 
-                                if(nOtherPlayersWithSure == nPlayers - 1)
+                                if(nOtherPlayersWithSure == N_PLAYERS - 1)
                                 {
                                     // other players have surs, so they lose one of their surs
-                                    for(int r = 0; r < nPlayers; r++)
+                                    for(int r = 0; r < N_PLAYERS; r++)
                                     {
-                                        Player otherPlayer = players[r];
+                                        Player otherPlayer = PLAYERS[r];
                                         if(player != otherPlayer)
                                         {
                                             Card surCard = otherPlayer.getSurs().get(otherPlayer.getSurs().getNumberOfCards() - 1);
@@ -226,12 +229,12 @@ public class Pasur
                         }else
                         {
                             // System.out.println(player.toString() + " picks " + toString(cardsToPick));
-                            logger.notify(player.toString() + " picks " + toString(cardsToPick));
+                            LOGGER.notify(player.toString() + " picks " + toString(cardsToPick));
                             // the played card of the player can't pick any card, so we have to leave it at the pool
                         }
 
                         k++;
-                        if(k == nPlayers)
+                        if(k == N_PLAYERS)
                             k = 0;
 
                         updateScores(false);
@@ -242,10 +245,10 @@ public class Pasur
                 {
                     // give remaining cards in the pool to the last player who picked up a card
 
-                    List<Card> poolCards = poolHand.getCardList();
+                    List<Card> poolCards = POOL_HAND.getCardList();
                     if(!poolCards.isEmpty())
                         // System.out.println(lastPlayerWhoPickedAcard + " picks " + toString(poolCards) + " at the end of this round of game");
-                        logger.notify(lastPlayerWhoPickedAcard + " picks " + toString(poolCards) + " at the end of this round of game");
+                        LOGGER.notify(lastPlayerWhoPickedAcard + " picks " + toString(poolCards) + " at the end of this round of game");
 
                     cardList.clear();
                     for(int i = 0; i < poolCards.size(); i++)
@@ -265,16 +268,16 @@ public class Pasur
             updateScores(true);
 
             currentStartingPlayerPos++;
-            if(currentStartingPlayerPos == nPlayers)
+            if(currentStartingPlayerPos == N_PLAYERS)
                 currentStartingPlayerPos = 0;
 
             // System.out.println("Round " + roundOfGame + " of the game ends...");
-            logger.notify("Round " + roundOfGame + " of the game ends...");
+            LOGGER.notify("Round " + roundOfGame + " of the game ends...");
 
             List<Player> playersWithEnoughScore = null;
-            for(int i = 0; i < nPlayers; i++)
+            for(int i = 0; i < N_PLAYERS; i++)
             {
-                Player player = players[i];
+                Player player = PLAYERS[i];
                 if(player.getTotalPoint() >= SCORE_TO_WIN)
                 {
                     if(playersWithEnoughScore == null)
@@ -306,18 +309,18 @@ public class Pasur
         }
 
         // System.out.println("Game ends...");
-        logger.notify("Game ends...");
+        LOGGER.notify("Game ends...");
         String winningText = winner.toString() + " is the winner!";
 
         propertyChangePublisher.firePropertyChange(ON_GAME_END, null, winningText);
 
         // System.out.println(winningText);
-        logger.notify(winningText);
+        LOGGER.notify(winningText);
     }
 
     private boolean isAsur(Card playedCard, boolean isLastRound)
     {
-        if(poolHand.isEmpty())
+        if(POOL_HAND.isEmpty())
         {
             // pool has become empty, potentially a sur
             if(!isLastRound && playedCard.getRank() != Rank.JACK)
@@ -335,15 +338,15 @@ public class Pasur
      */
     private void reset()
     {
-        for(int i = 0; i < nPlayers; i++)
+        for(int i = 0; i < N_PLAYERS; i++)
         {
-            Player player = players[i];
+            Player player = PLAYERS[i];
             player.reset();
         }
 
-        poolHand.removeAll(false);
+        POOL_HAND.removeAll(false);
 
-        deckHand = deck.toHand(false);
+        deckHand = DECK.toHand(false);
         deckHand.setVerso(true);
 
         updateScores(true);
@@ -354,16 +357,16 @@ public class Pasur
     private void updateScores(boolean bLastRound)
     {
         String scoreString = "";
-        for (int i = 0; i < nPlayers; i++)
+        for (int i = 0; i < N_PLAYERS; i++)
         {
             if(i != 0)
                 scoreString += "        ";
 
-            Player player = players[i];
+            Player player = PLAYERS[i];
             // logger.notify("PickedCard[%s]",player.getPickedCards().toString());
             // logger.notify("Surs[%s]",player.getSurs().toString());
 
-            int score = CompositeStrategy.getInstance().CalcScore(player.getPickedCards(),player.getSurs());
+            int score = STRATEGIES.CalcScore(player.getPickedCards(),player.getSurs());
             player.setCurrPoint(score);
             player.setCumulatePoint(player.getTotalPoint() + score);
 
@@ -377,17 +380,17 @@ public class Pasur
         propertyChangePublisher.firePropertyChange(ON_UPDATE_SCORE, null, scoreString);
 //        scoreLabel.setText(scoreString);
         // System.out.println("Total Running Scores: " + scoreString);
-        logger.notify("Total Running Scores: " + scoreString);
+        LOGGER.notify("Total Running Scores: " + scoreString);
     }
 
     private void dealingOutToPlayers(int currentStartingPlayerPos)
     {
         // System.out.println("Dealing out to players...");
-        logger.notify("Dealing out to players...");
+        LOGGER.notify("Dealing out to players...");
         List<Card> cardList = new ArrayList<>(1);
-        for (int i = 0, k = currentStartingPlayerPos; i < nPlayers; i++)
+        for (int i = 0, k = currentStartingPlayerPos; i < N_PLAYERS; i++)
         {
-            Player player = players[k];
+            Player player = PLAYERS[k];
             Hand hand = player.getHand();
 
             for (int j = 0; j < N_HAND_CARDS; j++)
@@ -407,18 +410,18 @@ public class Pasur
             }
 
             k++;
-            if(k == nPlayers)
+            if(k == N_PLAYERS)
                 k = 0;
 
             // System.out.println(player.toString() + " hand: " + toString(player.getHand().getCardList()));
-            logger.notify(player.toString() + " hand: " + toString(player.getHand().getCardList()));
+            LOGGER.notify(player.toString() + " hand: " + toString(player.getHand().getCardList()));
         }
     }
 
     private void dealingOutToPool()
     {
         // System.out.println("Dealing out to pool...");
-        logger.notify("Dealing out to pool...");
+        LOGGER.notify("Dealing out to pool...");
         List<Card> cardList = new ArrayList<>(1);
         for (int i = 0; i < N_HAND_CARDS; i++)
         {
@@ -438,12 +441,12 @@ public class Pasur
                 cardList.clear();
                 cardList.add(card);
                 card.setVerso(false);  // Show the face
-                transfer(cardList, poolHand, true);
+                transfer(cardList, POOL_HAND, true);
             }
         }
 
         // System.out.println("Pool: " + toString(poolHand.getCardList()));
-        logger.notify("Pool: " + toString(poolHand.getCardList()));
+        LOGGER.notify("Pool: " + toString(POOL_HAND.getCardList()));
     }
 
     private void transfer(List<Card> cards, Hand h, boolean sortAfterTransfer)
@@ -470,7 +473,7 @@ public class Pasur
 
     private String toString(Collection<Card> cards)
     {
-        Hand h = new Hand(deck); // Clone to sort without changing the original hand
+        Hand h = new Hand(DECK); // Clone to sort without changing the original hand
         for (Card c : cards)
         {
             h.insert(c.getSuit(), c.getRank(), false);
@@ -480,14 +483,14 @@ public class Pasur
         return "[" + h.getCardList().stream().map(Pasur::toString).collect(Collectors.joining(", ")) + "]";
     }
 
-    public int getnPlayers()
+    public int getN_PLAYERS()
     {
-        return nPlayers;
+        return N_PLAYERS;
     }
 
-    public Deck getDeck()
+    public Deck getDECK()
     {
-        return deck;
+        return DECK;
     }
 
     public Hand getDeckHand()
@@ -495,14 +498,14 @@ public class Pasur
         return deckHand;
     }
 
-    public Hand getPoolHand()
+    public Hand getPOOL_HAND()
     {
-        return poolHand;
+        return POOL_HAND;
     }
 
-    public Player[] getPlayers()
+    public Player[] getPLAYERS()
     {
-        return players;
+        return PLAYERS;
     }
 
     public boolean isPaused()
@@ -533,7 +536,7 @@ public class Pasur
 
     public static Card randomCard(Hand hand)
     {
-        int x = random.nextInt(hand.getNumberOfCards());
+        int x = RANDOM.nextInt(hand.getNumberOfCards());
         return hand.get(x);
     }
 }

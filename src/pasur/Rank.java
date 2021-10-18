@@ -12,17 +12,17 @@ public enum Rank
     TEN(10), NINE(9), EIGHT(8), SEVEN(7), SIX(6),
     FIVE(5), FOUR(4), THREE(3), TWO(2);
 
-    private final int value;
+    private final int VALUE;
 
     Rank(int value)
     {
-        this.value = value;
+        this.VALUE = value;
     }
 
 
-    public int getValue()
+    public int getVALUE()
     {
-        return value;
+        return VALUE;
     }
 
     public static int[] getCardValuesArray()
@@ -32,7 +32,7 @@ public enum Rank
 
         for(int i = 0, len = ranks.length; i < len; i++)
         {
-            cardValuesArray[i] = ranks[i].value;
+            cardValuesArray[i] = ranks[i].VALUE;
         }
 
         return cardValuesArray;
@@ -48,7 +48,7 @@ public enum Rank
             case JACK:
                 return toString().substring(0, 1);
             default:
-                return String.valueOf(value);
+                return String.valueOf(VALUE);
         }
     }
 }
